@@ -31,7 +31,7 @@ def crop_to_square(box):
     return box_around(center(box), np.min(box[2:]))
 
 
-def intersect(box, other_box):
+def intersection(box, other_box):
     topleft = np.maximum(box[:2], other_box[:2])
     bottomright = np.minimum(box[:2] + box[2:4], other_box[:2] + other_box[2:4])
     return np.concatenate([topleft, np.maximum(0, bottomright - topleft)])
@@ -45,19 +45,20 @@ def box_hull(box, other_box):
 
 def corners(box):
     x, y, w, h = box
-    return np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
+    return np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]], np.float32)
 
 
 def side_midpoints(box):
     x, y, w, h = box
-    return np.array([[x, y + h / 2], [x + w / 2, y], [x + w, y + h / 2], [x + w / 2, y + h]])
+    return np.array(
+        [[x, y + h / 2], [x + w / 2, y], [x + w, y + h / 2], [x + w / 2, y + h]], np.float32)
 
 
 def iou(box1, box2):
     box1 = np.asarray(box1, np.float32)
     box2 = np.asarray(box2, np.float32)
 
-    intersection_area = area(intersect(box1, box2))
+    intersection_area = area(intersection(box1, box2))
     union_area = area(box1) + area(box2) - intersection_area
     return intersection_area / union_area
 
@@ -66,7 +67,7 @@ def giou(box1, box2):
     box1 = np.asarray(box1, np.float32)
     box2 = np.asarray(box2, np.float32)
     full_box = union(box1, box2)
-    intersection_area = area(intersect(box1, box2))
+    intersection_area = area(intersection(box1, box2))
     union_area = area(box1) + area(box2) - intersection_area
     return intersection_area / union_area + union_area / area(full_box) - 1
 
@@ -90,14 +91,18 @@ def bb_of_points(points):
     return np.asarray([x1, y1, x2 - x1, y2 - y1])
 
 
-def full_box(imshape=None, imsize=None):
+def full(imshape=None, imsize=None):
     assert imshape is not None or imsize is not None
     if imshape is None:
         imshape = [imsize[1], imsize[0]]
     return np.asarray([0, 0, imshape[1], imshape[0]])
 
 
-def intersect_vertical(box, other_box):
+def empty():
+    return np.array([0, 0, 0, 0], np.float32)
+
+
+def intersection_vertical(box, other_box):
     top = np.maximum(box[1], other_box[1])
     bottom = np.minimum(box[1] + box[3], other_box[1] + other_box[3])
     return np.array([box[0], top, box[2], bottom - top])
@@ -128,6 +133,6 @@ def bb_of_mask(mask):
     try:
         xmin, xmax = np.nonzero(np.any(mask, axis=0))[0][[0, -1]]
         ymin, ymax = np.nonzero(np.any(mask, axis=1))[0][[0, -1]]
-        return np.array([xmin, ymin, xmax - xmin + 1, ymax - ymin + 1])
+        return np.array([xmin, ymin, xmax - xmin + 1, ymax - ymin + 1], np.float32)
     except IndexError:
-        return np.array([0, 0, 0, 0])
+        return empty()
