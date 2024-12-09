@@ -3,7 +3,7 @@ By convention, a box is represented as the topleft x,y coordinates and the width
 [x1, y1, width, height].
 """
 import numpy as np
-
+import warnings
 
 def center(box):
     return box[:2] + box[2:4] / 2
@@ -19,7 +19,7 @@ def box_around(center_point, size):
 
 
 def expand(bbox, expansion_factor=1):
-    new_size = bbox[2:] * expansion_factor
+    new_size = bbox[2:4] * expansion_factor
     return box_around(center(bbox), new_size)
 
 
@@ -28,7 +28,7 @@ def expand_to_square(box):
 
 
 def crop_to_square(box):
-    return box_around(center(box), np.min(box[2:]))
+    return box_around(center(box), np.min(box[2:4]))
 
 
 def intersection(box, other_box):
@@ -86,9 +86,17 @@ def area(box):
 def bb_of_points(points):
     if len(points) == 0:
         return np.zeros(4, np.float32)
-    x1, y1 = np.nanmin(points, axis=0)
-    x2, y2 = np.nanmax(points, axis=0)
-    return np.asarray([x1, y1, x2 - x1, y2 - y1])
+
+    with np.errstate(invalid='ignore'):
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', 'All-NaN slice encountered')
+            x1, y1 = np.nanmin(points, axis=0)
+            x2, y2 = np.nanmax(points, axis=0)
+
+    result = np.asarray([x1, y1, x2 - x1, y2 - y1])
+    if np.any(np.isnan(result)):
+        return np.zeros(4, np.float32)
+    return result
 
 
 def full(imshape=None, imsize=None):
@@ -120,13 +128,13 @@ def random_partial_box(random_state):
 
 def random_partial_subbox(box, random_state):
     subbox = random_partial_box(random_state)
-    topleft = box[:2] + subbox[:2] * box[2:]
-    size = subbox[2:] * box[2:]
+    topleft = box[:2] + subbox[:2] * box[2:4]
+    size = subbox[2:] * box[2:4]
     return np.concatenate([topleft, size])
 
 
 def shift(box, delta):
-    return np.concatenate([box[:2] + delta, box[2:]])
+    return np.concatenate([box[:2] + delta, box[2:4]])
 
 
 def bb_of_mask(mask):
@@ -136,3 +144,35 @@ def bb_of_mask(mask):
         return np.array([xmin, ymin, xmax - xmin + 1, ymax - ymin + 1], np.float32)
     except IndexError:
         return empty()
+
+def crop_image(image, box, pad=True, pad_value=0):
+    intbox = np.round(np.asarray(box)).astype(np.int32)
+
+    # check if start is negative or the end goes beyond the imshape. If so, then pad
+    paddings = [[0, 0], [0, 0], [0, 0]]
+    if pad:
+        if intbox[0] < 0:
+            paddings[1][0] = np.abs(intbox[0])
+            intbox[2] += intbox[0]
+            intbox[0] = 0
+        if intbox[1] < 0:
+            paddings[0][0] = np.abs(intbox[1])
+            intbox[3] += intbox[1]
+            intbox[1] = 0
+        if intbox[0] + intbox[2] > image.shape[1]:
+            paddings[1][1] = intbox[0] + intbox[2] - image.shape[1]
+            intbox[2] = image.shape[1] - intbox[0]
+        if intbox[1] + intbox[3] > image.shape[0]:
+            paddings[0][1] = intbox[1] + intbox[3] - image.shape[0]
+            intbox[3] = image.shape[0] - intbox[1]
+    else:
+        intbox[0] = np.maximum(0, intbox[0])
+        intbox[1] = np.maximum(0, intbox[1])
+        intbox[2] = np.minimum(image.shape[1] - intbox[0], intbox[2])
+        intbox[3] = np.minimum(image.shape[0] - intbox[1], intbox[3])
+
+    cropped = image[intbox[1]:intbox[1] + intbox[3], intbox[0]:intbox[0] + intbox[2]]
+    if pad:
+        cropped = np.pad(cropped, paddings, mode='constant', constant_values=pad_value)
+    return cropped
+
