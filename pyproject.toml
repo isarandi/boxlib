@@ -1,0 +1,54 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "setuptools_scm[toml]>=8",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "boxlib"
+dynamic = ["version"]
+description = "Utilities for bounding box manipulation."
+authors = [
+    { name = "István Sárándi", email = "istvan.sarandi@uni-tuebingen.de" }
+]
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+
+
+dependencies = [
+    'numpy',
+]
+
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development :: Libraries",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux"
+]
+
+
+[project.urls]
+Homepage = "https://github.com/isarandi/boxlib"
+Repository = "https://github.com/isarandi/boxlib"
+Issues = "https://github.com/isarandi/boxlib/issues"
+Author = "https://istvansarandi.com"
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
+write_to = "src/boxlib/_version.py"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 99
+skip-string-normalization = true
