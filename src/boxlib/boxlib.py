@@ -145,6 +145,46 @@ def side_midpoints(box: np.ndarray) -> np.ndarray:
     )
 
 
+def inscribed_ellipse_points(box: np.ndarray, n_angles: int = 8, n_radii: int = 2) -> np.ndarray:
+    """Return points on and inside the ellipse inscribed in a bounding box.
+
+    The ellipse is centered at the box center with semi-axes equal to half the box dimensions.
+    Points are sampled at multiple radii (from center to perimeter) and angles.
+
+    This is useful for reprojecting bounding boxes through nonlinear transformations
+    (e.g., lens distortion), where sampling only corners or perimeter points may not
+    capture interior warping accurately.
+
+    Args:
+        box: The bounding box as a numpy array of shape (4,), [x1, y1, width, height].
+        n_angles: Number of angles to sample around the ellipse.
+        n_radii: Number of radii to sample (1 = perimeter only, 2+ = includes interior).
+
+    Returns:
+        Points as a numpy array of shape (n_angles * n_radii + 1, 2), including the center.
+    """
+    box = np.asarray(box, dtype=np.float32)
+    cx, cy = center(box)
+    a = box[2] / 2
+    b = box[3] / 2
+
+    angles = np.linspace(0, 2 * np.pi, n_angles, endpoint=False, dtype=np.float32)
+    radii = np.linspace(0, 1, n_radii + 1, dtype=np.float32)[1:]
+
+    r_grid, angle_grid = np.meshgrid(radii, angles)
+    r_flat = r_grid.ravel()
+    angle_flat = angle_grid.ravel()
+
+    x = np.float32(cx) + r_flat * a * np.cos(angle_flat)
+    y = np.float32(cy) + r_flat * b * np.sin(angle_flat)
+
+    points = np.empty((n_angles * n_radii + 1, 2), dtype=np.float32)
+    points[0] = (cx, cy)
+    points[1:, 0] = x
+    points[1:, 1] = y
+    return points
+
+
 def iou(box1: np.ndarray, box2: np.ndarray) -> float:
     """Calculate the Intersection over Union (IoU) of two bounding boxes.
 
