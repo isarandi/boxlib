@@ -22,7 +22,6 @@ dependencies = [
     'numpy',
 ]
 
-
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -34,6 +33,14 @@ classifiers = [
     "Operating System :: POSIX :: Linux"
 ]
 
+[project.optional-dependencies]
+docs = [
+    'sphinx',
+    'sphinxcontrib-bibtex',
+    'sphinx-autoapi',
+    'sphinx-markdown-builder',
+    'pydata-sphinx-theme',
+]
 
 [project.urls]
 Homepage = "https://github.com/isarandi/boxlib"
