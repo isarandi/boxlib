@@ -40,6 +40,9 @@ docs = [
     'sphinx-autoapi',
     'sphinx-markdown-builder',
     'pydata-sphinx-theme',
+    'sphinx-codeautolink',
+    'setuptools-scm',
+    'toml',
 ]
 
 [project.urls]

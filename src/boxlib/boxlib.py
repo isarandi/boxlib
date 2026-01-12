@@ -204,9 +204,9 @@ def iou(box1: np.ndarray, box2: np.ndarray) -> float:
 
 
 def giou(box1: np.ndarray, box2: np.ndarray) -> float:
-    """Calculate the Generalized Intersection over Union (IoU) of two bounding boxes.
+    """Calculate the Generalized Intersection over Union (GIoU) of two bounding boxes.
 
-    The generalized IoU is defined as:
+    The generalized IoU :footcite:`rezatofighi2019giou` is defined as:
 
     GIoU = IoU + U / C - 1,
 
@@ -221,7 +221,7 @@ def giou(box1: np.ndarray, box2: np.ndarray) -> float:
         box2: The second bounding box as a numpy array of shape (4,), [x1, y1, width, height].
 
     Returns:
-        The Generalized Intersection over Union (IoU) of the two bounding boxes as a float.
+        The Generalized Intersection over Union (GIoU) of the two bounding boxes as a float.
     """
 
     box1 = np.asarray(box1, np.float32)
